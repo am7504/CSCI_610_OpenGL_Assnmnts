@@ -32,9 +32,9 @@ function setUpCamera() {
     // set up your projection
     // defualt is orthographic projection
     let projMatrix = glMatrix.mat4.create();
-    glMatrix.mat4.ortho(projMatrix, -5, 5, -5, 5, 1.0, 300.0);
+    // glMatrix.mat4.ortho(projMatrix, -5, 5, -5, 5, 1.0, 300.0);
     
-    // glMatrix.mat4.perspective(projMatrix, radians(60), 1.0, 1.0, 300.0);
+    glMatrix.mat4.perspective(projMatrix, radians(60), 1.0, 1.0, 300.0);
     gl.uniformMatrix4fv (program.uProjT, false, projMatrix);
 
     
@@ -64,11 +64,11 @@ function drawShapes() {
   gl.bindVertexArray(myTeapot.VAO);
   gl.drawElements(gl.TRIANGLES, myTeapot.indices.length, gl.UNSIGNED_SHORT, 0);
 
-  // // Translate cube
-  // glMatrix.mat4.translate(modelMatrixCube, modelMatrixCube, [2.0, 1.0, 0.0]);
-  // gl.uniformMatrix4fv(program.uModelT, false, modelMatrixCube);
-  // gl.bindVertexArray(myCube1.VAO);
-  // gl.drawElements(gl.TRIANGLES, myCube1.indices.length, gl.UNSIGNED_SHORT, 0);
+  // Translate cube
+  glMatrix.mat4.translate(modelMatrixCube, modelMatrixCube, [2.0, 1.0, 0.0]);
+  gl.uniformMatrix4fv(program.uModelT, false, modelMatrixCube);
+  gl.bindVertexArray(myCube1.VAO);
+  gl.drawElements(gl.TRIANGLES, myCube1.indices.length, gl.UNSIGNED_SHORT, 0);
 }
 
 ///////////////////////////////////////////////////////////////////
