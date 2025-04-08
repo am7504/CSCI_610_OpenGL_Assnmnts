@@ -2,32 +2,72 @@
 
   // Global variables that are set and used
   // across the application
-  let gl,
-    program,
-    points,
-    bary,
-    indices;
+  let gl, program;
   
-  // VAO stuff
-  var myVAO = null;
-  var myVertexBuffer = null;
-  var myBaryBuffer = null;
-  var myIndexBuffer = null;
+  // Global declarations of objects that you will be drawing
+  var myTeapot = null;
+
+
+//
+// A function that creates shapes to be drawn and creates a VAO for each
+//
+// We start you out with an example for the teapot.
+//
+function createShapes() {
+
+    myTeapot = new Teapot();
+    myTeapot.VAO = bindVAO (myTeapot);
+}
+
+
+//
+// Set up your camera and your projection matrices
+//
+function setUpCamera() {
     
-  // Other globals with default values;
-  var division1 = 3;
-  var division2 = 1;
-  var updateDisplay = true;
-  var anglesReset = [30.0, 30.0, 0.0];
-  var angles = [30.0, 30.0, 0.0];
-  var angleInc = 5.0;
-  
-  // Shapes we can draw
-  var CUBE = 1;
-  var CYLINDER = 2;
-  var CONE = 3;
-  var SPHERE = 4;
-  var curShape = CUBE;
+    // set up your projection
+    // defualt is orthographic projection
+    let projMatrix = glMatrix.mat4.create();
+    glMatrix.mat4.ortho(projMatrix, -5, 5, -5, 5, 1.0, 300.0);
+    gl.uniformMatrix4fv (program.uProjT, false, projMatrix);
+
+    
+    // set up your view
+    // defaut is at (0,0,-5) looking at the origin
+    let viewMatrix = glMatrix.mat4.create();
+    glMatrix.mat4.lookAt(viewMatrix, [0, 0, -5], [0, 0, 0], [0, 1, 0]);
+    gl.uniformMatrix4fv (program.uViewT, false, viewMatrix);
+}
+
+
+//
+// Use this function to draw all of your shapes.
+// Recall that VAOs should have been set up the call to createShapes()
+// You'll have to provide a Model Matrix for each shape to be drawn that
+// places the object in the world.
+//
+// An example is shown for placing the teapot
+//
+function drawShapes() {
+    
+    
+    let modelMatrix = glMatrix.mat4.create();
+    
+    // drawing the teapot rotating around Y  180 degrees
+    glMatrix.mat4.rotateY (modelMatrix,  modelMatrix, radians(180.0))
+    
+    // send the model matrix to the shader and draw.
+    gl.uniformMatrix4fv (program.uModelT, false, modelMatrix);
+    gl.bindVertexArray(myTeapot.VAO);
+    gl.drawElements(gl.TRIANGLES, myTeapot.indices.length, gl.UNSIGNED_SHORT, 0);
+    
+}
+
+///////////////////////////////////////////////////////////////////
+//
+//   You shouldn't have to edit below this line
+//
+///////////////////////////////////////////////////////////////////
 
   // Given an id, extract the content's of a shader script
   // from the DOM and return the compiled shader
@@ -82,73 +122,54 @@
     // for easy access later in the code
     program.aVertexPosition = gl.getAttribLocation(program, 'aVertexPosition');
     program.aBary = gl.getAttribLocation(program, 'bary');
-    program.uTheta = gl.getUniformLocation (program, 'theta');
+    program.uModelT = gl.getUniformLocation (program, 'modelT');
+    program.uViewT = gl.getUniformLocation (program, 'viewT');
+    program.uProjT = gl.getUniformLocation (program, 'projT');
   }
 
-  // general call to make and bind a new object based on current
-  // settings..Basically a call to shape specfic calls in cgIshape.js
-  function createNewShape() {
-      
-      // clear your points and elements
-      points = [];
-      indices = [];
-      bary = [];
-      
-      // make your shape based on type
-      if (curShape == CUBE) makeCube (division1);
-      else if (curShape == CYLINDER) makeCylinder ( division1, division2);
-      else if (curShape == CONE) makeCone ( division1, division2);
-      else if (curShape == SPHERE) makeSphere ( division1, division2);
-      else
-          console.error(`Bad object type`);
-          
+  // creates a VAO and returns its ID
+  function bindVAO (shape) {
       //create and bind VAO
-      if (myVAO == null) myVAO = gl.createVertexArray();
-      gl.bindVertexArray(myVAO);
+      let theVAO = gl.createVertexArray();
+      gl.bindVertexArray(theVAO);
       
       // create and bind vertex buffer
-      if (myVertexBuffer == null) myVertexBuffer = gl.createBuffer();
+      let myVertexBuffer = gl.createBuffer();
       gl.bindBuffer(gl.ARRAY_BUFFER, myVertexBuffer);
-      gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(points), gl.STATIC_DRAW);
+      gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(shape.points), gl.STATIC_DRAW);
       gl.enableVertexAttribArray(program.aVertexPosition);
       gl.vertexAttribPointer(program.aVertexPosition, 4, gl.FLOAT, false, 0, 0);
       
       // create and bind bary buffer
-      if (myBaryBuffer == null) myBaryBuffer = gl.createBuffer();
+      let myBaryBuffer = gl.createBuffer();
       gl.bindBuffer(gl.ARRAY_BUFFER, myBaryBuffer);
-      gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(bary), gl.STATIC_DRAW);
+      gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(shape.bary), gl.STATIC_DRAW);
       gl.enableVertexAttribArray(program.aBary);
       gl.vertexAttribPointer(program.aBary, 3, gl.FLOAT, false, 0, 0);
       
-      // uniform values
-      gl.uniform3fv (program.uTheta, new Float32Array(angles));
-      
       // Setting up the IBO
-      if (myIndexBuffer == null) myIndexBuffer = gl.createBuffer();
+      let myIndexBuffer = gl.createBuffer();
       gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, myIndexBuffer);
-      gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(indices), gl.STATIC_DRAW);
+      gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(shape.indices), gl.STATIC_DRAW);
 
       // Clean
       gl.bindVertexArray(null);
       gl.bindBuffer(gl.ARRAY_BUFFER, null);
       gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, null);
-          
-      // indicate a redraw is required.
-      updateDisplay = true;
+      
+      return theVAO;
+    
   }
 
+  
   // We call draw to render to our canvas
   function draw() {
     // Clear the scene
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
     gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
-
-    // Bind the VAO
-    gl.bindVertexArray(myVAO);
-    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, myIndexBuffer);
-
-    // Draw to the scene using triangle primitives
-    gl.drawElements(gl.TRIANGLES, indices.length, gl.UNSIGNED_SHORT, 0);
+      
+    // draw your shapes
+    drawShapes();
 
     // Clean
     gl.bindVertexArray(null);
@@ -158,6 +179,7 @@
 
   // Entry point to our application
   function init() {
+      
     // Retrieve the canvas
     const canvas = document.getElementById('webgl-canvas');
     if (!canvas) {
@@ -165,11 +187,14 @@
       return null;
     }
 
-    // deal with keypress
-    window.addEventListener('keydown', gotKey ,false);
 
     // Retrieve a WebGL context
     gl = canvas.getContext('webgl2');
+    if (!gl) {
+        console.error(`There is no WebGL 2.0 context`);
+        return null;
+      }
+      
     // Set the clear color to be black
     gl.clearColor(0, 0, 0, 1);
       
@@ -187,7 +212,10 @@
     initProgram();
     
     // create and bind your current object
-    createNewShape();
+    createShapes();
+    
+    // set up your camera
+    setUpCamera();
     
     // do a draw
     draw();
