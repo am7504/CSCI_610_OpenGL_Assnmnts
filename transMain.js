@@ -35,16 +35,11 @@ function setUpCamera() {
     // glMatrix.mat4.ortho(projMatrix, -5, 5, -5, 5, 1.0, 300.0);
     
     glMatrix.mat4.perspective(projMatrix, radians(60), 1.0, 1.0, 300.0);
-    glMatrix.mat4.translate(projMatrix, projMatrix, [-2.0, -2.0, -1.0]);
-    glMatrix.mat4.rotateY(projMatrix, projMatrix, radians(-20.0));
-    glMatrix.mat4.rotateX(projMatrix, projMatrix, radians(-10.0));
-    gl.uniformMatrix4fv (program.uProjT, false, projMatrix);
-
     
     // set up your view
     // defaut is at (0,0,-5) looking at the origin
     let viewMatrix = glMatrix.mat4.create();
-    glMatrix.mat4.lookAt(viewMatrix, [0, 0, -5], [0, 0, 0], [0, 1, 0]);
+    glMatrix.mat4.lookAt(viewMatrix, [-2, -2, -5], [0, 0, 0], [0, 1, 0]);
     gl.uniformMatrix4fv (program.uViewT, false, viewMatrix);
 }
 
