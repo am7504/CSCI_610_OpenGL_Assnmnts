@@ -42,8 +42,45 @@ class Cube extends cgIShape {
     }
     
     makeCube (subdivisions)  {
-        
-        // fill in your cube code here.
+        subdivisions -= 1;
+        const squareWidth = 1 / (2 ** subdivisions); // Size of each small square
+        const half = 0.5; // Cube goes from -0.5 to 0.5
+
+        function createFace(normal, uAxis, vAxis, offset) {
+            for (let i = 0; i < 2 ** subdivisions; i++) {
+                for (let j = 0; j < 2 ** subdivisions; j++) {
+                    // Compute four corners of the square
+                    const reverse = offset < 0;
+                    let x1 = -half + i * squareWidth;
+                    let y1 = -half + j * squareWidth;
+                    let x2 = x1 + squareWidth;
+                    let y2 = y1 + squareWidth;
+
+                    // Convert to 3D positions
+                    let p1 = { [uAxis]: x1, [vAxis]: y1, [normal]: offset };
+                    let p2 = { [uAxis]: x2, [vAxis]: y1, [normal]: offset };
+                    let p3 = { [uAxis]: x1, [vAxis]: y2, [normal]: offset };
+                    let p4 = { [uAxis]: x2, [vAxis]: y2, [normal]: offset };
+
+                    // Two triangles per square
+                    if (reverse) {
+                        addTriangle(p1.x, p1.y, p1.z, p3.x, p3.y, p3.z, p2.x, p2.y, p2.z);
+                        addTriangle(p2.x, p2.y, p2.z, p3.x, p3.y, p3.z, p4.x, p4.y, p4.z);
+                    } else {
+                        addTriangle(p1.x, p1.y, p1.z, p2.x, p2.y, p2.z, p3.x, p3.y, p3.z);
+                        addTriangle(p2.x, p2.y, p2.z, p4.x, p4.y, p4.z, p3.x, p3.y, p3.z);
+                    }
+                }
+            }
+        }
+
+        // Generate faces (normal axis, u-axis, v-axis, normal offset)
+        createFace("z", "y", "x", half);  // Front (+Z)
+        createFace("z", "y", "x", -half); // Back (-Z)
+        createFace("x", "z", "y", half);  // Right (+X)
+        createFace("x", "z", "y", -half); // Left (-X)
+        createFace("y", "x", "z", -half);  // Top (-Y)
+        createFace("y", "x", "z", half); // Bottom (+Y)
     }
 }
 
