@@ -41,7 +41,7 @@ function setUpCamera() {
     // set up your view
     // defaut is at (0,0,-5) looking at the origin
     let viewMatrix = glMatrix.mat4.create();
-    glMatrix.mat4.lookAt(viewMatrix, [0, 0, -5], [0, 0, 0], [0, 1, 0]);
+    glMatrix.mat4.lookAt(viewMatrix, [0, 5, -5], [0, 0, 0], [0, 1, 0]);
     gl.uniformMatrix4fv (program.uViewT, false, viewMatrix);
 }
 
@@ -65,7 +65,7 @@ function drawShapes() {
   gl.drawElements(gl.TRIANGLES, myTeapot.indices.length, gl.UNSIGNED_SHORT, 0);
 
   // Translate cube
-  glMatrix.mat4.translate(modelMatrixCube, modelMatrixCube, [-2.0, -1.0, 1.0]);
+  glMatrix.mat4.translate(modelMatrixCube, modelMatrixCube, [0.0, -1.0, 1.0]);
   gl.uniformMatrix4fv(program.uModelT, false, modelMatrixCube);
   gl.bindVertexArray(myCube1.VAO);
   gl.drawElements(gl.TRIANGLES, myCube1.indices.length, gl.UNSIGNED_SHORT, 0);
