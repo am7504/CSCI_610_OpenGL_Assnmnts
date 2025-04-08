@@ -46,7 +46,7 @@ class Cube extends cgIShape {
         const squareWidth = 1 / (2 ** subdivisions); // Size of each small square
         const half = 0.5; // Cube goes from -0.5 to 0.5
 
-        function createFace(normal, uAxis, vAxis, offset) {
+        const createFace = (normal, uAxis, vAxis, offset) => {
             for (let i = 0; i < 2 ** subdivisions; i++) {
                 for (let j = 0; j < 2 ** subdivisions; j++) {
                     // Compute four corners of the square
@@ -64,11 +64,11 @@ class Cube extends cgIShape {
 
                     // Two triangles per square
                     if (reverse) {
-                        super.addTriangle(p1.x, p1.y, p1.z, p3.x, p3.y, p3.z, p2.x, p2.y, p2.z);
-                        super.addTriangle(p2.x, p2.y, p2.z, p3.x, p3.y, p3.z, p4.x, p4.y, p4.z);
+                        this.addTriangle(p1.x, p1.y, p1.z, p3.x, p3.y, p3.z, p2.x, p2.y, p2.z);
+                        this.addTriangle(p2.x, p2.y, p2.z, p3.x, p3.y, p3.z, p4.x, p4.y, p4.z);
                     } else {
-                        super.addTriangle(p1.x, p1.y, p1.z, p2.x, p2.y, p2.z, p3.x, p3.y, p3.z);
-                        super.addTriangle(p2.x, p2.y, p2.z, p4.x, p4.y, p4.z, p3.x, p3.y, p3.z);
+                        this.addTriangle(p1.x, p1.y, p1.z, p2.x, p2.y, p2.z, p3.x, p3.y, p3.z);
+                        this.addTriangle(p2.x, p2.y, p2.z, p4.x, p4.y, p4.z, p3.x, p3.y, p3.z);
                     }
                 }
             }
