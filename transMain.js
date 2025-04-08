@@ -32,9 +32,9 @@ function setUpCamera() {
     // set up your projection
     // defualt is orthographic projection
     let projMatrix = glMatrix.mat4.create();
-    // glMatrix.mat4.ortho(projMatrix, -5, 5, -5, 5, 1.0, 300.0);
+    glMatrix.mat4.ortho(projMatrix, -5, 5, -5, 5, 1.0, 300.0);
     
-    glMatrix.mat4.perspective(projMatrix, radians(60), 1.0, 1.0, 300.0);
+    // glMatrix.mat4.perspective(projMatrix, radians(60), 1.0, 1.0, 300.0);
     
     // set up your view
     // defaut is at (0,0,-5) looking at the origin
