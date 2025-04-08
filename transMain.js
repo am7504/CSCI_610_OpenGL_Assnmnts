@@ -3,7 +3,7 @@
   // Global variables that are set and used
   // across the application
   let gl, program;
-  
+
   // Global declarations of objects that you will be drawing
   var myTeapot = null;
   var myCube1 = null;
@@ -59,14 +59,13 @@ function drawShapes() {
   let modelMatrixCube = glMatrix.mat4.create();
 
   // Rotate teapot around Y-axis
-  glMatrix.mat4.rotateY(modelMatrixTeapot, modelMatrixTeapot, radians(90.0));
+  glMatrix.mat4.rotateY(modelMatrixTeapot, modelMatrixTeapot, radians(30.0));
   gl.uniformMatrix4fv(program.uModelT, false, modelMatrixTeapot);
   gl.bindVertexArray(myTeapot.VAO);
   gl.drawElements(gl.TRIANGLES, myTeapot.indices.length, gl.UNSIGNED_SHORT, 0);
 
   // Translate cube
-  // glMatrix.mat4.scale(modelMatrixCube, modelMatrixCube, [3.0, 0.5, 0.0]);
-  glMatrix.mat4.translate(modelMatrixCube, modelMatrixCube, [-4.0, -3.0, 1.0]);
+  glMatrix.mat4.translate(modelMatrixCube, modelMatrixCube, [2.0, 1.0, 1.0]);
   gl.uniformMatrix4fv(program.uModelT, false, modelMatrixCube);
   gl.bindVertexArray(myCube1.VAO);
   gl.drawElements(gl.TRIANGLES, myCube1.indices.length, gl.UNSIGNED_SHORT, 0);
@@ -170,7 +169,7 @@ function drawShapes() {
     
   }
 
-  
+
   // We call draw to render to our canvas
   function draw() {
     // Clear the scene
