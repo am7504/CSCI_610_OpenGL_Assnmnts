@@ -6,7 +6,7 @@
 
   // Global declarations of objects that you will be drawing
   var myTeapot = null;
-  var myCube1 = null;
+  var myCube = null;
 
 
 //
@@ -18,8 +18,8 @@ function createShapes() {
 
     myTeapot = new Teapot();
     myTeapot.VAO = bindVAO (myTeapot);
-    myCube1 = new Cube(2);
-    myCube1.VAO = bindVAO(myCube1);
+    myCube = new Cube(2);
+    myCube.VAO = bindVAO(myCube);
 
 }
 
@@ -41,9 +41,37 @@ function setUpCamera() {
     // set up your view
     // defaut is at (0,0,-5) looking at the origin
     let viewMatrix = glMatrix.mat4.create();
-    glMatrix.mat4.lookAt(viewMatrix, [0, 5, -5], [0, 0, 0], [0, 1, 0]);
+    glMatrix.mat4.lookAt(viewMatrix, [-9.0, 10.0, -15.0], [0, 0, 0], [0, 1, 0]);
     gl.uniformMatrix4fv (program.uViewT, false, viewMatrix);
 }
+
+
+function drawHelper(model, {
+  translate = [0, 0, 0],
+  scale = [1, 1, 1], 
+  rotation = { axis: [0, 1, 0], angle: 0 }
+  } = {}
+) {
+
+  let modelMatrix = glMatrix.mat4.create();
+
+  // Apply translation
+  glMatrix.mat4.translate(modelMatrix, modelMatrix, translate);
+
+  // Apply rotation (if angle is non-zero)
+  if (rotation.angle !== 0) {
+    glMatrix.mat4.rotate(modelMatrix, modelMatrix, radians(rotation.angle), rotation.axis);
+  }
+
+  // Apply scale
+  glMatrix.mat4.scale(modelMatrix, modelMatrix, scale);
+
+  // Send model matrix to shader and draw
+  gl.uniformMatrix4fv(program.uModelT, false, modelMatrix);
+  gl.bindVertexArray(model.VAO);
+  gl.drawElements(gl.TRIANGLES, model.indices.length, gl.UNSIGNED_SHORT, 0);
+}
+
 
 
 //
@@ -55,20 +83,31 @@ function setUpCamera() {
 // An example is shown for placing the teapot
 //
 function drawShapes() {
-  let modelMatrixTeapot = glMatrix.mat4.create();
-  let modelMatrixCube = glMatrix.mat4.create();
 
-  // Rotate teapot around Y-axis
-  glMatrix.mat4.rotateY(modelMatrixTeapot, modelMatrixTeapot, radians(30.0));
-  gl.uniformMatrix4fv(program.uModelT, false, modelMatrixTeapot);
-  gl.bindVertexArray(myTeapot.VAO);
-  gl.drawElements(gl.TRIANGLES, myTeapot.indices.length, gl.UNSIGNED_SHORT, 0);
+  // center pedestal
+  // object
+  drawHelper(myTeapot, {translate: [0.0, 0.0, 1.0], scale: [1.5, 1.5, 1.5]});
+  // stand
+  drawHelper(myCube, {translate: [0.0, -6.0, 1.0], scale: [4.0, 1.0, 4.0]});
+  drawHelper(myCube, {translate: [0.0, -3.0, 1.0], scale: [2.0, 5.0, 2.0], rotation: {axis: [0, 1, 0], angle: 45}});
+  drawHelper(myCube, {translate: [0.0, -0.5, 1.0], scale: [4.0, 1.0, 4.0]});
 
-  // Translate cube
-  glMatrix.mat4.translate(modelMatrixCube, modelMatrixCube, [0.0, -1.0, 1.0]);
-  gl.uniformMatrix4fv(program.uModelT, false, modelMatrixCube);
-  gl.bindVertexArray(myCube1.VAO);
-  gl.drawElements(gl.TRIANGLES, myCube1.indices.length, gl.UNSIGNED_SHORT, 0);
+  // left pedestal
+  // object
+  drawHelper(myCube, {translate: [6.0, 1.0, 1.0], scale: [2, 2, 2]});
+  // stand
+  drawHelper(myCube, {translate: [6.0, -6.0, 1.0], scale: [4.0, 1.0, 4.0]});
+  drawHelper(myCube, {translate: [6.0, -3.0, 1.0], scale: [2.0, 5.0, 2.0], rotation: {axis: [0, 1, 0], angle: 45}});
+  drawHelper(myCube, {translate: [6.0, -0.5, 1.0], scale: [4.0, 1.0, 4.0]});
+
+  // right pedestal
+  // object
+  drawHelper(myCube, {translate: [-6.0, 1.5, 0.5], scale: [2, 2, 2], rotation:{axis: [1, 1, 0], angle: 45}});
+  // stand
+  drawHelper(myCube, {translate: [-6.0, -6.0, 1.0], scale: [4.0, 1.0, 4.0]});
+  drawHelper(myCube, {translate: [-6.0, -3.0, 1.0], scale: [2.0, 5.0, 2.0], rotation: {axis: [0, 1, 0], angle: 45}});
+  drawHelper(myCube, {translate: [-6.0, -0.5, 1.0], scale: [4.0, 1.0, 4.0]});
+
 }
 
 ///////////////////////////////////////////////////////////////////
