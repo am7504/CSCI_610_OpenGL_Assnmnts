@@ -1,135 +1,135 @@
+<!DOCTYPE html>
 <html>
 <head>
-    <title>CSCI-610: Assn 8 - Textures</title>
-    
+    <title>CSCI-610 -- Final Exam</title>
+
     <link rel="icon" href="data:,">
     
-    <!-- vertex Shader -->
-    <script id="sphereMap-V"  type="x-shader/x-vertex">
-    #version 300 es
-    precision mediump float;
-    // Vertex shader for phong illumination model
-    // Per vertex shading
+    <!-- include vertex shaders -->
 
-    // Vertex Attributes
-    in vec3 aVertexPosition; // in model coords
-    in vec2 aUV;    // u-v coordinates
+    <script id="wireframe-V" type="x-shader/x-vertex">
+        #version 300 es
+        precision highp float;
+        
+        // --- Attributes ---
+        in vec4 aVertexPosition; // Vertex position in model space (x,y,z,w)
+        in vec3 aNormal;         // Vertex normal in model space
+        in vec2 aUV;             // Vertex texture coordinate
+        
+        // --- Uniforms ---
+        uniform mat4 uModelT;        // Model matrix
+        uniform mat4 uViewT;         // View matrix
+        uniform mat4 uProjT;        // Projection matrix
+        uniform mat3 uNormalMatrix;  // Transpose(Inverse(mat3(ModelView))) matrix
+        
+        // --- Outputs to Fragment Shader ---
+        out vec3 vNormal;       // Normal in View Space
+        out vec3 vFragPos;      // Fragment position in View Space
+        out vec2 vUV;           // Texture coordinate
+        
+        void main() {
+            // Calculate position in View Space
+            vec4 viewPos = uViewT * uModelT * aVertexPosition;
+            vFragPos = viewPos.xyz; // Pass position (before projection)
+        
+            // Transform Normal to View Space using Normal Matrix
+            vNormal = normalize(uNormalMatrix * aNormal);
+        
+            // Pass UV coordinate through
+            vUV = aUV;
+        
+            // Calculate final clip space position
+            gl_Position = uProjT * viewPos;
+        }
+        </script>
 
-    // outputs
-    out vec2 theUV;  // pass uv's onto the fragment shader
-    
-    // for object rotation
-    uniform vec3 theta;
-      
-      
-    void main()
-    {
-        // Compute the sines and cosines of each rotation
-        // about each axis
-        vec3 angles = radians( theta );
-        vec3 c = cos( angles );
-        vec3 s = sin( angles );
-
-        // rotation matrices
-        mat4 rx = mat4 ( 1.0,  0.0,  0.0,  0.0,
-                         0.0,  c.x,  s.x,  0.0,
-                         0.0, -s.x,  c.x,  0.0,
-                         0.0,  0.0,  0.0,  1.0 );
-
-        mat4 ry = mat4 ( c.y,  0.0, -s.y,  0.0,
-                         0.0,  1.0,  0.0,  0.0,
-                         s.y,  0.0,  c.y,  0.0,
-                         0.0,  0.0,  0.0,  1.0 );
-
-         mat4 rz = mat4 ( c.z,  s.z,  0.0,  0.0,
-                         -s.z,  c.z,  0.0,  0.0,
-                         0.0,  0.0,  1.0,  0.0,
-                         0.0,  0.0,  0.0,  1.0 );
-                         
-        // pass uvs to fragment shader
-        theUV = aUV;
-
-        // transform vertex to clip space
-        gl_Position = rz * ry * rx * vec4 (aVertexPosition, 1.0);
-    }
-
-    </script>
-
-
-     <!-- fragment Shader -->
-     <script id="sphereMap-F" type="x-shader/x-fragment">
-         #version 300 es
-
-         // Fragment shader for phong illumination model
-         // Per vertex shading
-
-         precision lowp float;
-             
-         // uvs passed in from vertex shader
-         in vec2 theUV;
-         
-         // the texture to use
-         uniform sampler2D theTexture;
-
-         // Color that is the result of this shader
-         out vec4 fragColor;
-
-         void main(void) {
-             fragColor = texture (theTexture, theUV);
-         }
-
-    </script>
+     <!-- wireframe fragment Shaders -->
+     <script id="wireframe-F" type="x-shader/x-fragment">
+        #version 300 es
+        precision highp float;
+        
+        // --- Inputs from Vertex Shader ---
+        in vec3 vNormal;       // Interpolated Normal in View Space
+        in vec3 vFragPos;      // Interpolated Fragment position in View Space
+        in vec2 vUV;           // Interpolated Texture coordinate
+        
+        // --- Uniforms ---
+        // Texture
+        uniform sampler2D uSampler;
+        
+        // Light Properties (View Space light position set from JS)
+        uniform vec3 uLightPos;       // Light position in View Space
+        uniform vec3 uLightColor;
+        uniform vec3 uAmbientColor;
+        
+        // Material Properties
+        uniform vec3 uMaterialSpecularColor;
+        uniform float uShininess;
+        // We'll use the texture for diffuse color
+        
+        // Camera Position (World Space - needed to calc View Vector)
+        // uniform vec3 uViewPos; // If calculating View vector in World space
+        // OR calculate View vector directly in View space (simpler)
+        
+        // --- Output ---
+        out vec4 fragColor;
+        
+        void main() {
+            // Get base color from the texture
+            vec4 textureColor = texture(uSampler, vUV);
+        
+            // Normalize the incoming normal vector (interpolation can change length)
+            vec3 normal = normalize(vNormal);
+        
+            // --- Ambient Component ---
+            // Use ambient light color directly, multiplied by texture color
+            vec3 ambient = uAmbientColor * textureColor.rgb;
+        
+            // --- Diffuse Component ---
+            // Calculate direction from fragment to light source (in View Space)
+            vec3 lightDir = normalize(uLightPos - vFragPos);
+            // Calculate diffuse intensity (clamped at 0)
+            float diffIntensity = max(dot(normal, lightDir), 0.0);
+            // Calculate diffuse color
+            vec3 diffuse = diffIntensity * uLightColor * textureColor.rgb;
+        
+            // --- Specular Component ---
+            // Calculate view direction (from fragment to camera, in View Space)
+            // In view space, the camera is at the origin (0,0,0)
+            vec3 viewDir = normalize(-vFragPos); // Vector from frag pos to origin
+            // Calculate reflection vector
+            vec3 reflectDir = reflect(-lightDir, normal);
+            // Calculate specular intensity
+            float specIntensity = pow(max(dot(viewDir, reflectDir), 0.0), uShininess);
+            // Calculate specular color
+            vec3 specular = specIntensity * uLightColor * uMaterialSpecularColor;
+        
+            // --- Final Color ---
+            // Combine ambient, diffuse, specular components
+            vec3 finalColor = ambient + diffuse + specular;
+        
+            // Output final color (use texture's alpha if needed, otherwise 1.0)
+            fragColor = vec4(finalColor, textureColor.a);
+            // fragColor = vec4(finalColor, 1.0); // Or force opaque
+        }
+        </script>
      
      <!-- Matrix library and code for standard transformations -->
      <script type="text/javascript" src="gl-matrix-min.js"></script>
-     
-     <!-- include the shape creation functions -->
-    <script type="text/javascript" src="./cgIShape.js"></script>
     
-    <!-- definition of standard shapes -->
+    <!-- include the main final functions -->
+    <script type="text/javascript" src="./finalMain.js"></script>
+    
+    <!-- shape functions -->
+    <script type="text/javascript" src="./cgIShape.js"></script>
     <script type="text/javascript" src="./myShapes-min.js"></script>
     
-    <!-- include the main tesselation functions -->
-    <script type="text/javascript" src="./textureMain2.js"></script>
+    <!-- keyboard functions -->
+    <script type="text/javascript" src="./event.js"></script>
     
     <!-- texture images -->
-    <img id="world-texture" src="1_earth_16k.jpg" style="display: none;"> </img>
+     <img id="test-texture" src="ThisIsWhat8BeatFeelsLike(1).png" style="display: none;"> </img>
 
-    <img id="face-texture" src="test_face.jpg" style="display: none;"> </img>
-    
-    <!-- keyboard functions -->
-    <script type="text/javascript">
-      function gotKey (event) {
-      
-      var key = event.key;
-      
-      //  change object type
-      if (key == 'c') {
-          nowShowing = 'Cube';
-          angles = cube_angles;
-      }
-      if (key == 's') {
-          nowShowing = 'Sphere';
-          angles = sphere_angles;
-      }
-      
-      // change texture
-      if (key == '1') curTexture = 'globe';
-      if (key == '2') curTexture = 'myimage';
-      if (key == '3') curTexture = 'proc';
-      
-      //  incremental rotation
-      if (key == 'x') angles[0] -= angleInc;
-      if (key == 'y') angles[1] -= angleInc;
-      if (key == 'z') angles[2] -= angleInc;
-      if (key == 'X') angles[0] += angleInc;
-      if (key == 'Y') angles[1] += angleInc;
-      if (key == 'Z') angles[2] += angleInc;
-          
-      draw();
-    }
-    </script>
-    
   <script type="text/javascript">
     // Call init once the webpage has loaded
     window.onload = init;
@@ -137,46 +137,14 @@
 </head>
 
 <body>
-  <h1>CSCI-610: Assn 8 - Textures</h1>
+  <h1>CSCI-610: Final Exam Image</h1>
   <table>
-       <tr>
-           <td><canvas id="webgl-canvas" width="500" height="500">
-             Your browser does not support the HTML5 canvas element.
-           </canvas></td>
-           
-           <td>
-               <h3>Controls</h3>
-               
-               <table border="1">
-               <tbody>
-                   <tr>
-                   <td>1, 2, 3</td>
-                   <td>Switch between globe image, your image, and procedural texture</td>
-                   </tr>
-               <tr>
-               <td>x, y, z</td>
-               <td>Rotate the current shape forward about the x, y, or z axis</td>
-               </tr>
-               <tr>
-               <td>X, Y, Z</td>
-               <td>Rotate the current shape backward about the x, y, or z axis</td>
-               </tr>
-               <tr>
-               <td>c</td>
-               <td>Select the cube as the current shape</td>
-               </tr>
-               <tr>
-               <td>s</td>
-               <td>Select the sphere as the current shape</td>
-               </tr>
-               </tbody>
-               </table>
-               
-           </td>
-       </tr>
-   </table>
-  
-
+      <tr>
+          <td><canvas id="webgl-canvas" width="500" height="500">
+            Your browser does not support the HTML5 canvas element.
+          </canvas></td>
+      </tr>
+  </table>
   
   
 
